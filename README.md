@@ -24,3 +24,8 @@ go get 4d63.com/slacksearch
 ```
 SLACK_TOKEN=xoxp-... slacksearch <search query>
 ```
+
+## Limitations
+
+* Returns only first page containing 20 results.
+* Returns all results order descending by timestamp.
