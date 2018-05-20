@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -68,8 +69,8 @@ func search(slackToken, query string) ([]result, error) {
 	var resDecoded struct {
 		Messages struct {
 			Matches []struct {
-				Timestamp string `json:"ts"`
-				Channel   struct {
+				Ts      string `json:"ts"`
+				Channel struct {
 					Name string `json:"name"`
 				} `json:"channel"`
 				Username  string `json:"username"`
@@ -88,7 +89,7 @@ func search(slackToken, query string) ([]result, error) {
 	results := make([]result, resultCount)
 	for i := 0; i < resultCount; i++ {
 		results[i] = result{
-			Timestamp: time.Now(),
+			Timestamp: tsToTime(resDecoded.Messages.Matches[i].Ts),
 			Channel:   resDecoded.Messages.Matches[i].Channel.Name,
 			Username:  resDecoded.Messages.Matches[i].Username,
 			Text:      strings.Replace(resDecoded.Messages.Matches[i].Text, "\n", " ", -1),
@@ -97,4 +98,17 @@ func search(slackToken, query string) ([]result, error) {
 	}
 
 	return results, nil
+}
+
+func tsToTime(ts string) time.Time {
+	tsParts := strings.Split(ts, ".")
+	seconds, err := strconv.ParseInt(tsParts[0], 10, 64)
+	if err != nil {
+		panic(fmt.Errorf("Error parsing Slack timestamp %q", ts))
+	}
+	microseconds, err := strconv.ParseInt(tsParts[1], 10, 64)
+	if err != nil {
+		panic(fmt.Errorf("Error parsing Slack timestamp %q", ts))
+	}
+	return time.Unix(seconds, microseconds*int64(time.Microsecond))
 }
